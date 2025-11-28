@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // 1. Importamos las funciones de Firebase
-// Asegúrate de importar doc y updateDoc
+// Asegúrate de importar doc y updateDoc
 import { db } from './firebase'; // Ajusta la ruta a tu archivo firebase.js
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore"; 
 
@@ -10,7 +10,8 @@ function App() {
   const [address, setAddress] = useState("");
   const [firebaseStatus, setFirebaseStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState("");
+  // ✨ Mensaje de carga más útil para guiar al usuario
+  const [loadingText, setLoadingText] = useState("Cargando datos del comprobante...");
   const [accuracy, setAccuracy] = useState(null);
   
   // Guardamos el ID del documento para actualizarlo en tiempo real
@@ -68,7 +69,7 @@ function App() {
           // Opcional: Actualizar dirección (Cuidado: Nominatim tiene limites de uso gratis)
           // Lo hacemos solo si la precisión es buena para no saturar
           if (acc < 50) {
-             getAddressFromCoords(lat, lng).then(addr => setAddress(addr));
+              getAddressFromCoords(lat, lng).then(addr => setAddress(addr));
           }
 
           // 2. Actualizar FIREBASE en Tiempo Real
@@ -112,7 +113,8 @@ function App() {
   const handleVerifyReceipt = async () => {
     setLoading(true);
     setFirebaseStatus("");
-    setLoadingText("Cargando datos del comprobante...");
+    // ✨ Mensaje clave para la activación del GPS
+    setLoadingText("Conectando con satélites. ¡Asegúrate de tener el GPS activado!"); 
 
     if (!navigator.geolocation) {
       alert("Tu navegador no soporta GPS");
@@ -167,15 +169,37 @@ function App() {
 
         } catch (error) {
           console.error("Error Firebase:", error);
-          alert("Error al guardar: " + error.message);
+          alert("Error al guardar en la base de datos: " + error.message);
           setLoading(false);
         }
       },
+      // 🚨 GESTIÓN DE ERRORES MEJORADA 🚨
       (error) => {
-        alert("Error GPS: " + error.message);
+        let errorMsg = "Error desconocido.";
+        
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                errorMsg = "❌ Permiso de ubicación denegado. Por favor, habilita la ubicación para continuar.";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                // Ocurre si el GPS está apagado o la señal es muy débil.
+                errorMsg = "⚠️ GPS no disponible. Asegúrate de que tu Ubicación esté **ENCENDIDA** en los ajustes del dispositivo.";
+                break;
+            case error.TIMEOUT:
+                errorMsg = "⏳ Tiempo de espera agotado. Intenta de nuevo en un lugar abierto con mejor señal GPS.";
+                break;
+        }
+
+        alert(errorMsg); // Alerta visual para el usuario
+        console.error("Error GPS:", error.message, "Código:", error.code);
+        setFirebaseStatus("❌ " + errorMsg);
         setLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 20000 }
+      { 
+          // Esto es lo que pide la señal más fuerte, forzando la activación
+          enableHighAccuracy: true, 
+          timeout: 20000 
+      }
     );
   };
 
@@ -280,7 +304,7 @@ function App() {
             <button
               onClick={() => {
                 setShowReceipt(false);
-                setCurrentDocId(null); // Esto detiene el rastreo
+                setCurrentDocId(null); // Esto detiene el rastreo gracias al cleanup del useEffect
                 setFirebaseStatus("");
               }}
               style={{
